@@ -4,7 +4,10 @@ using GameOrchestrator.Models;
 
 namespace GameOrchestrator.Services;
 
-public sealed record TaskRunResult(RuntimeSession Session, bool Success, bool TimedOut, string? Error);
+public sealed record TaskRunResult(RuntimeSession Session, bool Success, bool TimedOut, string? Error)
+{
+    public bool TargetStartupTimedOut { get; init; }
+}
 
 public sealed class TaskRunnerService(ProcessMonitorService monitor, ProcessCleanupService cleanup, LoggingService log, TaskEventBus events, TaskScreenshotCoordinator? screenshots = null, MuMuCleanupService? mumu = null)
 {
@@ -14,10 +17,12 @@ public sealed class TaskRunnerService(ProcessMonitorService monitor, ProcessClea
     {
         var session = new RuntimeSession { TaskId = task.Id, TaskName = task.Name, Status = TaskRunStatus.Starting };
         task.Status = TaskRunStatus.Starting; events.Publish(new TaskStartingEvent(session)); SessionChanged?.Invoke(session);
-        Process? root = null; JobObjectService? job = null; bool timedOut = false; string? error = null;
+        Process? root = null; JobObjectService? job = null; bool timedOut = false; bool targetStartupTimedOut = false; string? error = null;
         MuMuTarget? mumuTarget = null;
         try
         {
+            if (KnownToolProfileService.NormalizeZogCompletion(task))
+                await log.WriteAsync(LogLevel.Info, $"{task.Name} 完成检测已匹配实际启动程序：{task.CompletionProcessName}");
             if (!File.Exists(task.ProgramPath)) throw new FileNotFoundException("找不到任务程序", task.ProgramPath);
             mumuTarget = await _mumu.CaptureAsync(task, queueToken);
             session.MuMuVmId = mumuTarget?.VmId;
@@ -42,6 +47,7 @@ public sealed class TaskRunnerService(ProcessMonitorService monitor, ProcessClea
                 startInfo.Environment.Remove("DOTNET_ROOT_X86");
             }
             root = Process.Start(startInfo) ?? throw new InvalidOperationException("进程启动失败");
+            var startupElapsed = Stopwatch.StartNew();
             session.RootPid = root.Id;
             session.RootExecutablePath = Path.GetFullPath(task.ProgramPath);
             try { session.RootProcessStartTime = root.StartTime; } catch { }
@@ -58,10 +64,10 @@ public sealed class TaskRunnerService(ProcessMonitorService monitor, ProcessClea
             await log.WriteAsync(LogLevel.Info, $"{task.Name} 已启动，PID {root.Id}");
             using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(task.MaxRunMinutes));
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(queueToken, timeout.Token);
-            try { await WaitForCompletionAsync(root, task, session, linked.Token); }
+            try { targetStartupTimedOut = await WaitForCompletionAsync(root, task, session, startupElapsed, linked.Token); timedOut = targetStartupTimedOut; }
             catch (OperationCanceledException) when (timeout.IsCancellationRequested && !queueToken.IsCancellationRequested) { timedOut = true; }
             if (queueToken.IsCancellationRequested) session.ExitReason = "用户停止";
-            else if (timedOut) { task.Status = session.Status = TaskRunStatus.TimedOut; session.ExitReason = "超过最大运行时间"; await log.WriteAsync(LogLevel.Error, $"{task.Name} 已超时"); }
+            else if (timedOut) { task.Status = session.Status = TaskRunStatus.TimedOut; session.ExitReason = targetStartupTimedOut ? $"目标进程 {task.CompletionProcessName} 在启动后 2 分钟内未出现" : "超过最大运行时间"; await log.WriteAsync(LogLevel.Error, $"{task.Name} 已超时：{session.ExitReason}"); }
             else { task.Status = session.Status = TaskRunStatus.CompletionDetected; session.ExitReason = "完成条件满足"; events.Publish(new TaskCompletionDetectedEvent(session)); await log.WriteAsync(LogLevel.Info, $"检测到 {task.Name} 已完成"); }
         }
         catch (OperationCanceledException) { session.ExitReason = "用户停止"; }
@@ -97,10 +103,10 @@ public sealed class TaskRunnerService(ProcessMonitorService monitor, ProcessClea
         else if (!timedOut) events.Publish(new TaskFailedEvent(session, error ?? session.ExitReason));
         if (screenshots is not null) await screenshots.CaptureEndAsync(session, CancellationToken.None);
         SessionChanged?.Invoke(session);
-        return new(session, success, timedOut, error);
+        return new(session, success, timedOut, error) { TargetStartupTimedOut = targetStartupTimedOut };
     }
 
-    private async Task WaitForCompletionAsync(Process root, AutomationTaskConfig task, RuntimeSession session, CancellationToken token)
+    private async Task<bool> WaitForCompletionAsync(Process root, AutomationTaskConfig task, RuntimeSession session, Stopwatch elapsed, CancellationToken token)
     {
         if (task.CompletionMode == CompletionDetectionMode.Custom) throw new NotSupportedException("自定义完成检测接口已预留，第一版暂未实现");
         var logDetector = task.CompletionMode == CompletionDetectionMode.LogKeyword
@@ -109,30 +115,25 @@ public sealed class TaskRunnerService(ProcessMonitorService monitor, ProcessClea
         var failureDetector = task.CompletionMode == CompletionDetectionMode.LogKeyword && !string.IsNullOrWhiteSpace(task.CompletionFailureKeyword)
             ? new LogKeywordCompletionDetector(task.CompletionLogPath, task.CompletionFailureKeyword)
             : null;
-        bool targetSeen = false;
-        DateTimeOffset? targetMissingSince = null;
+        var target = Path.GetFileNameWithoutExtension(task.CompletionProcessName);
+        // Process.Start already proves that the root was started, even if it exits
+        // before the first scan. Child targets must actually be observed.
+        var exitTracker = new ProcessExitCompletionTracker(string.Equals(
+            Path.GetFileNameWithoutExtension(session.RootExecutablePath), target, StringComparison.OrdinalIgnoreCase));
         while (true)
         {
             token.ThrowIfCancellationRequested();
             monitor.Scan(session, task); SessionChanged?.Invoke(session);
-            if (task.CompletionMode == CompletionDetectionMode.MainProcessExit && root.HasExited) return;
-            if (logDetector is not null && await logDetector.CheckAsync(token)) return;
+            if (task.CompletionMode == CompletionDetectionMode.MainProcessExit && root.HasExited) return false;
+            if (logDetector is not null && await logDetector.CheckAsync(token)) return false;
             if (failureDetector is not null && await failureDetector.CheckAsync(token))
                 throw new InvalidOperationException($"检测到任务失败日志：{task.CompletionFailureKeyword}");
             if (task.CompletionMode == CompletionDetectionMode.SpecifiedProcessExit)
             {
-                var target = Path.GetFileNameWithoutExtension(task.CompletionProcessName);
                 var matches = session.SnapshotTrackedProcesses().Where(p => string.Equals(p.ProcessName, target, StringComparison.OrdinalIgnoreCase)).ToList();
-                if (matches.Count > 0)
-                {
-                    targetSeen = true;
-                    targetMissingSince = null;
-                }
-                else if (targetSeen)
-                {
-                    targetMissingSince ??= DateTimeOffset.Now;
-                    if (DateTimeOffset.Now - targetMissingSince >= TimeSpan.FromSeconds(3)) return;
-                }
+                var result = exitTracker.Check(matches.Count > 0, elapsed.Elapsed);
+                if (result == ProcessExitCheck.Completed) return false;
+                if (result == ProcessExitCheck.StartupTimedOut) return true;
             }
             await Task.Delay(700, token);
         }

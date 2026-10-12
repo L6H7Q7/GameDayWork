@@ -37,6 +37,17 @@ public sealed class TaskQueueService(TaskRunnerService runner, LoggingService lo
                 {
                     var result = await runner.RunAsync(task, _cts.Token);
                     if (_cts.IsCancellationRequested || result.Success) break;
+                    if (result.TargetStartupTimedOut)
+                    {
+                        if (result.Error is not null)
+                        {
+                            Status = QueueRunStatus.Failed;
+                            events.Publish(new QueueFailedEvent(result.Error));
+                            return;
+                        }
+                        await log.WriteAsync(LogLevel.Warning, $"{task.Name} 目标启动超时，清理验证通过，继续下一项任务");
+                        break;
+                    }
                     if (policy == FailurePolicy.RetryCurrentTask && retry++ < 1) { await log.WriteAsync(LogLevel.Warning, $"重试任务 {task.Name}"); continue; }
                     if (policy == FailurePolicy.StopQueue) { Status = QueueRunStatus.Failed; events.Publish(new QueueFailedEvent(result.Error ?? "任务失败")); return; }
                     if (policy == FailurePolicy.SkipCurrentTask) task.Status = TaskRunStatus.Skipped;

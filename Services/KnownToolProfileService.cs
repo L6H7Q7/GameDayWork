@@ -42,7 +42,9 @@ public sealed class KnownToolProfileService
         foreach (var profile in Profiles)
         {
             if (results.Any(task => task.Name == profile.Name)) continue;
-            var executable = ResolveLatest(root, profile.ExecutablePattern);
+            var executable = profile.Name == "ZOG"
+                ? ResolveLatest(root, "ZOG\\OneDragon-RuntimeLauncher.exe") ?? ResolveLatest(root, profile.ExecutablePattern)
+                : ResolveLatest(root, profile.ExecutablePattern);
             if (executable is null) continue;
             var logPattern = ResolvePattern(root, profile.LogPattern);
             var task = new AutomationTaskConfig
@@ -53,7 +55,7 @@ public sealed class KnownToolProfileService
                 WorkingDirectory = Path.GetDirectoryName(executable) ?? "",
                 Arguments = profile.Arguments,
                 CompletionMode = CompletionDetectionMode.SpecifiedProcessExit,
-                CompletionProcessName = profile.CompletionProcessName,
+                CompletionProcessName = profile.Name == "ZOG" ? Path.GetFileName(executable) : profile.CompletionProcessName,
                 CompletionLogPath = logPattern,
                 CompletionKeyword = profile.CompletionKeyword,
                 CompletionFailureKeyword = profile.FailureKeyword,
@@ -61,7 +63,7 @@ public sealed class KnownToolProfileService
                 MaxRunMinutes = profile.MaxRunMinutes,
                 Description = $"已适配的 {profile.Name} 自动化任务。"
             };
-            task.ProcessRules.Add(new ProcessRule { ProcessName = profile.CompletionProcessName, ExecutableDirectory = task.WorkingDirectory, Monitor = true, Cleanup = true, AllowNameFallback = true });
+            task.ProcessRules.Add(new ProcessRule { ProcessName = task.CompletionProcessName, ExecutableDirectory = task.WorkingDirectory, Monitor = true, Cleanup = true, AllowNameFallback = true });
             results.Add(task);
         }
         return results;
@@ -105,6 +107,26 @@ public sealed class KnownToolProfileService
         string.IsNullOrWhiteSpace(rule.ExecutablePath) &&
         !string.IsNullOrWhiteSpace(rule.ExecutableDirectory) &&
         rule.Monitor && rule.Cleanup && !rule.AllowNameFallback;
+
+    public static bool NormalizeZogCompletion(AutomationTaskConfig task)
+    {
+        if (!string.Equals(task.ToolType, "ZOG", StringComparison.OrdinalIgnoreCase)
+            || task.CompletionMode != CompletionDetectionMode.SpecifiedProcessExit) return false;
+        var executable = Path.GetFileName(task.ProgramPath);
+        static bool IsLauncher(string name) =>
+            string.Equals(Path.GetFileNameWithoutExtension(name), "OneDragon-Launcher", StringComparison.OrdinalIgnoreCase)
+            || string.Equals(Path.GetFileNameWithoutExtension(name), "OneDragon-RuntimeLauncher", StringComparison.OrdinalIgnoreCase);
+        // Preserve user-selected child targets and other completion modes.
+        if (!IsLauncher(executable) || (!string.IsNullOrWhiteSpace(task.CompletionProcessName) && !IsLauncher(task.CompletionProcessName))) return false;
+        var changed = !string.Equals(task.CompletionProcessName, executable, StringComparison.OrdinalIgnoreCase);
+        task.CompletionProcessName = executable;
+        foreach (var rule in task.ProcessRules.Where(rule => IsLauncher(rule.ProcessName)))
+        {
+            if (!string.Equals(rule.ProcessName, executable, StringComparison.OrdinalIgnoreCase)) changed = true;
+            rule.ProcessName = executable;
+        }
+        return changed;
+    }
 
     private static IEnumerable<string> SearchRoots()
     {

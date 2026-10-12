@@ -10,6 +10,7 @@ AutoSaveUiTests.Run();
 TimeSelectionTests.Run();
 var failures = new List<string>();
 void Assert(bool condition, string message) { if (!condition) failures.Add(message); }
+await ProcessCompletionTests.RunAsync(Assert, args.Contains("--startup-timeout", StringComparer.OrdinalIgnoreCase));
 
 Assert(!new AppConfig().AutoBlackoutAfterTask, "任务链结束后应返回空闲监控，不应立即进入假息屏");
 Assert(!new AppConfig().StartWithWindows, "新安装默认不应自行创建开机启动项");
@@ -182,7 +183,7 @@ foreach (var profile in profiles)
 {
     Assert(File.Exists(profile.ProgramPath), $"识别出的 {profile.Name} 程序必须存在");
     Assert(profile.CompletionMode == CompletionDetectionMode.SpecifiedProcessExit, $"识别出的 {profile.Name} 应使用指定进程退出检测");
-    Assert(expectedProcesses.TryGetValue(profile.Name, out var expectedProcess) && profile.CompletionProcessName == expectedProcess,
+    Assert(expectedProcesses.TryGetValue(profile.Name, out var expectedProcess) && profile.CompletionProcessName == (profile.Name == "ZOG" ? Path.GetFileName(profile.ProgramPath) : expectedProcess),
         $"识别出的 {profile.Name} 应监控正确的任务进程");
     Assert(profile.ProcessRules.Any(rule => rule.Monitor && rule.Cleanup && rule.AllowNameFallback &&
         string.Equals(rule.ProcessName, profile.CompletionProcessName, StringComparison.OrdinalIgnoreCase)),

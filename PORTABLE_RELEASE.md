@@ -4,16 +4,18 @@ GameDayWork 仅发布 Windows x64 便携版，不制作安装程序。默认不�
 
 ## 本地打包
 
+v5.0.1 增加指定目标进程 2 分钟未启动超时保护，清理核验后继续下一项；修复 ZOG 集成启动器完成检测和旧配置名称错配。升级时保留 `data`、`logs`，旧 ZOG 配置在下次启动加载时自动修正。
+
 需要 .NET 8 SDK。在仓库根目录执行：
 
 ```powershell
-.\scripts\Publish-Portable.ps1 -Version 5.0.0
+.\scripts\Publish-Portable.ps1 -Version 5.0.1
 ```
 
 产物为：
 
 ```text
-artifacts/GameDayWork-v5.0.0-win-x64-portable.zip
+artifacts/GameDayWork-v5.0.1-win-x64-portable.zip
 ```
 
 ## GitHub Releases
@@ -21,8 +23,8 @@ artifacts/GameDayWork-v5.0.0-win-x64-portable.zip
 推送符合 `vX.Y.Z` 格式的标签后，`.github/workflows/release.yml` 会构建同名便携包并创建 GitHub Release：
 
 ```powershell
-git tag v5.0.0
-git push origin v5.0.0
+git tag v5.0.1
+git push origin v5.0.1
 ```
 
 创建标签前，应先完成下方人工检查，且不要使用真实五项目做自动化试跑。

@@ -47,6 +47,17 @@ public sealed class ConfigService
     private static bool Migrate(AppConfig config)
     {
         var changed = false;
+        bool NormalizeTasks(IEnumerable<AutomationTaskConfig> tasks)
+        {
+            var anyChanged = false;
+            foreach (var task in tasks)
+            {
+                anyChanged |= KnownToolProfileService.NormalizeZogCompletion(task);
+                anyChanged |= NormalizeTasks(task.Children);
+            }
+            return anyChanged;
+        }
+        changed |= NormalizeTasks(config.Tasks);
         if (config.Notifications is null)
         {
             config.Notifications = new NotificationConfig();
