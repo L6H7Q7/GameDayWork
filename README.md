@@ -4,7 +4,7 @@
 >
 > 📦 [下载最新 Windows x64 便携版](https://github.com/L6H7Q7/GameDayWork/releases/latest) · [便携版发布说明](PORTABLE_RELEASE.md)
 
-## 当前版本：v0.4.10
+## 当前版本：v5.0.0
 
 任务组不再统一设定运行时间：组内每项任务使用自身的「最大运行时间」，任务组设置只保留统一启动时间和任务间隔。旧配置里任务组的运行时长不再参与运行，升级后请按需核对组内各项任务的最大运行时间。
 
@@ -42,7 +42,7 @@ GameDayWork 适合需要在无人值守时依次运行多个桌面工具的场�
 
 ## 快速开始
 
-1. 从 [Releases](https://github.com/L6H7Q7/GameDayWork/releases/latest) 下载 `GameDayWork-v0.4.10-win-x64-portable.zip`，解压到单独目录，运行 `GameDayWork.exe`。
+1. 从 [Releases](https://github.com/L6H7Q7/GameDayWork/releases/latest) 下载 `GameDayWork-v5.0.0-win-x64-portable.zip`，解压到单独目录，运行 `GameDayWork.exe`。
 2. 点击“添加”选择独立任务或任务组。点击左侧任务进入设置，选择任务类型并核对程序路径和参数。
 3. 在组设置中点击“添加任务”管理组内任务，并设置统一启动时间和任务间隔，修改自动保存；组内每项任务的最长运行时间在各自的任务设置中填写。独立任务完成后结束，任务组完成当前项后继续下一项。
 4. 需要假息屏、开机自启或企业微信通知时，在右上角“设置”中按需开启。
@@ -68,7 +68,7 @@ GameDayWork 适合需要在无人值守时依次运行多个桌面工具的场�
 解压后的目录和首次运行生成的数据大致如下：
 
 ```text
-GameDayWork-v0.4.10-win-x64-portable\
+GameDayWork-v5.0.0-win-x64-portable\
 ├─ GameDayWork.exe
 ├─ GameDayWork.Service.exe
 ├─ 卸载系统服务.cmd
@@ -89,10 +89,10 @@ GameDayWork-v0.4.10-win-x64-portable\
 dotnet build .\GameDayWork.csproj
 dotnet build .\GameDayWork.Service\GameDayWork.Service.csproj
 dotnet run --project .\tests\GameOrchestrator.SmokeTests\GameOrchestrator.SmokeTests.csproj
-.\scripts\Publish-Portable.ps1 -Version 0.4.10
+.\scripts\Publish-Portable.ps1 -Version 5.0.0
 ```
 
-最后一条命令会生成 `artifacts/GameDayWork-v0.4.10-win-x64-portable.zip`。打包脚本会重建同名输出目录和 ZIP，请不要在该输出目录内保存个人配置或日志。发布包只包含便携程序和说明，不包含本机的 `data/`、`logs/`。
+最后一条命令会生成 `artifacts/GameDayWork-v5.0.0-win-x64-portable.zip`。打包脚本会重建同名输出目录和 ZIP，请不要在该输出目录内保存个人配置或日志。发布包只包含便携程序和说明，不包含本机的 `data/`、`logs/`。
 
 ## 项目结构
 

@@ -102,7 +102,7 @@
           </Grid.ColumnDefinitions>
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock Text="GameDayWork" FontSize="21" FontWeight="Bold" Foreground="#071536"/>
-            <TextBlock Text="v0.4.10" Foreground="#6E7F9C" Margin="12,5,0,0"/>
+            <TextBlock Text="v5.0.0" Foreground="#6E7F9C" Margin="12,5,0,0"/>
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <Button x:Name="HomeButton" Content="主页" Click="Home_Click" MinWidth="68" Margin="0,0,8,0"/>
