@@ -120,11 +120,16 @@ internal static class AutoSaveUiTests
             }
             Navigate("TaskEdit", group);
             model.EditingTask!.Name = "Saved group";
-            model.EditingTask.GroupTaskDurationMinutes = 22;
+            model.EditingTask.GroupTaskIntervalSeconds = 22;
             PumpUntil(() => group.Name == "Saved group" && !model.HasTaskEdits);
-            Check(Saved().Tasks[2].GroupTaskDurationMinutes == 22, "组设置应自动保存");
+            Check(Saved().Tasks[2].GroupTaskIntervalSeconds == 22, "组设置应自动保存");
             Wait((Task)Call(window, "EditGroupMembersAsync", true, null)!);
             Check(Saved().Tasks[2].Children.Count == 2 && model.EditingTaskTarget == group, "添加组任务应立即保存并保持组设置");
+            var child = group.Children[0];
+            Navigate("TaskEdit", child);
+            Layout(700);
+            Check(((Grid)window.FindName("TaskDurationFields")).Visibility == Visibility.Visible, "组内任务应能设置自身的最长运行时间");
+            Check(((Grid)window.FindName("TaskScheduleFields")).Visibility == Visibility.Collapsed, "组内任务的启动时间仍由任务组统一设置");
             Navigate("Home");
             model.SelectedTask = first; model.MoveDownCommand.Execute(null);
             var flush = (Task<bool>)Call(window, "FlushAutoSaveAsync", false)!; Wait(flush);

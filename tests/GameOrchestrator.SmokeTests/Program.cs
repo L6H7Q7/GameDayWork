@@ -57,13 +57,14 @@ try
     fresh.Tasks.Add(independent); fresh.Tasks.Add(group); fresh.Tasks.Add(unrelated);
     Assert(TaskPlanService.Expand([independent]).SequenceEqual([independent]), "独立任务不得继续执行其他任务，即使遗留完成后操作为 RunNext");
     Assert(TaskPlanService.Expand([group]).SequenceEqual([first, second]), "任务组必须按顺序执行启用的组内任务，忽略成员完成后操作");
-    Assert(group.GroupTaskDurationMinutes == 45 && group.GroupTaskIntervalSeconds == 5, "任务组默认每项持续45分钟、清理后间隔5秒");
-    Assert(first.EffectiveMaxRunMinutes == 45 && second.EffectiveMaxRunMinutes == 45 && first.IntervalAfterSeconds == 5 && second.IntervalAfterSeconds == 0,
-        "组设置应控制每项任务运行上限及任务间隔，组末尾不附加等待");
-    group.GroupTaskDurationMinutes = 23; group.GroupTaskIntervalSeconds = 7;
+    Assert(group.GroupTaskIntervalSeconds == 5, "任务组默认清理后间隔5秒");
+    Assert(first.MaxRunMinutes == 45 && second.MaxRunMinutes == 45 && first.IntervalAfterSeconds == 5 && second.IntervalAfterSeconds == 0,
+        "组内任务各自的最长运行时间不由任务组参与，任务间隔由任务组决定，组末尾不附加等待");
+    Assert(first.IsGroupChild && second.IsGroupChild, "组内任务应被标记为由所属任务组调度");
+    first.MaxRunMinutes = 23; group.GroupTaskIntervalSeconds = 7;
     TaskPlanService.Expand([group, independent]);
-    Assert(first.EffectiveMaxRunMinutes == 23 && first.IntervalAfterSeconds == 7 && independent.EffectiveMaxRunMinutes == independent.MaxRunMinutes && independent.IntervalAfterSeconds == 0,
-        "自定义组设置必须生效，且不得影响独立任务");
+    Assert(first.MaxRunMinutes == 23 && second.MaxRunMinutes == 45 && first.IntervalAfterSeconds == 7 && independent.MaxRunMinutes == 45 && independent.IntervalAfterSeconds == 0,
+        "组内任务自身的运行上限必须生效，且任务组设置不得影响独立任务");
     first.ProgramPath = Environment.ProcessPath!;
     first.ScheduledStartTime = "不使用的子任务时间";
     Assert(!validator.Validate([first]).Any(issue => issue.Message.Contains("定时启动")), "组内任务不应校验自身时间，应由任务组统一调度");
@@ -83,9 +84,9 @@ try
     Assert(roundtrip.Tasks.Count == 3 && roundtrip.Tasks[1].IsGroup && roundtrip.Tasks[1].Children.Select(child => child.Id).SequenceEqual(group.Children.Select(child => child.Id)), "任务组成员及顺序应持久保存");
     Assert(!roundtrip.Tasks[1].IsExpanded, "重新打开时任务组默认折叠");
     Assert(roundtrip.Tasks[1].ScheduledStartTime == "09:30", "任务组统一运行时间应持久保存");
-    Assert(roundtrip.Tasks[1].GroupTaskDurationMinutes == 23 && roundtrip.Tasks[1].GroupTaskIntervalSeconds == 7, "任务持续时间和任务间隔应持久保存");
-    Assert(roundtrip.Tasks[1].Children[0].GroupRunMinutes is null && roundtrip.Tasks[1].Children[0].IntervalAfterSeconds is null,
-        "组运行参数不得写入子任务配置");
+    Assert(roundtrip.Tasks[1].GroupTaskIntervalSeconds == 7, "任务组间隔应持久保存");
+    Assert(roundtrip.Tasks[1].Children[0].MaxRunMinutes == 23 && roundtrip.Tasks[1].Children[0].IntervalAfterSeconds is null,
+        "子任务自身的运行上限应持久保存，组运行参数不得写入子任务配置");
     Assert(new AutomationTaskConfig().CompletionAction == TaskCompletionAction.None, "独立任务默认完成后无操作");
 }
 finally
@@ -242,7 +243,7 @@ if (File.Exists(commandProcessor))
     var processLog = new LoggingService();
     var processRunner = new TaskRunnerService(processMonitor, new ProcessCleanupService(processMonitor, processLog), processLog, processEvents);
     var processQueue = new TaskQueueService(processRunner, processLog, processEvents);
-    var timedGroup = new AutomationTaskConfig { IsGroup = true, Children = [firstProcessTask, secondProcessTask], GroupTaskIntervalSeconds = 1, GroupTaskDurationMinutes = 45 };
+    var timedGroup = new AutomationTaskConfig { IsGroup = true, Children = [firstProcessTask, secondProcessTask], GroupTaskIntervalSeconds = 1 };
     await processQueue.RunAsync(TaskPlanService.Expand([timedGroup]), 0, FailurePolicy.ForceCleanupAndContinue);
     Assert(processQueue.Status == QueueRunStatus.Completed, "指定进程退出后队列应正常完成");
     Assert(firstProcessTask.Status == TaskRunStatus.Completed && secondProcessTask.Status == TaskRunStatus.Completed,

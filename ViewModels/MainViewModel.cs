@@ -438,7 +438,6 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         // Keep the live task object and runtime state used by the scheduler and runner.
         target.Name = source.Name;
         target.ToolType = source.ToolType;
-        target.GroupTaskDurationMinutes = source.GroupTaskDurationMinutes;
         target.GroupTaskIntervalSeconds = source.GroupTaskIntervalSeconds;
         if (target.IsGroup)
         {

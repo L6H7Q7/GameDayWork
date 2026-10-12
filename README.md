@@ -4,7 +4,9 @@
 >
 > 📦 [下载最新 Windows x64 便携版](https://github.com/L6H7Q7/GameDayWork/releases/latest) · [便携版发布说明](PORTABLE_RELEASE.md)
 
-## 当前版本：v0.4.9
+## 当前版本：v0.4.10
+
+任务组不再统一设定运行时间：组内每项任务使用自身的「最大运行时间」，任务组设置只保留统一启动时间和任务间隔。旧配置里任务组的运行时长不再参与运行，升级后请按需核对组内各项任务的最大运行时间。
 
 任务准备和执行期间，托盘右键菜单提供「结束任务」，点击后直接结束当前任务链并清理关联进程；主界面的「停止」按钮改为「结束」。
 
@@ -28,7 +30,7 @@ GameDayWork 适合需要在无人值守时依次运行多个桌面工具的场�
 
 ## 主要功能
 
-- 🧩 **任务组** — 默认收纳组内任务；点击组查看名称、统一启动时间和组内任务管理。单项最长运行时间默认 45 分钟；上一项完成并清理后，默认间隔 5 秒再运行下一项。
+- 🧩 **任务组** — 默认收纳组内任务；点击组查看名称、统一启动时间和组内任务管理。组内每项任务按自身的最长运行时间执行（默认 45 分钟），任务组不再统一设定；上一项完成并清理后，默认间隔 5 秒再运行下一项。
 - ✅ **完成与故障判断** — 监测主进程、指定进程或本次运行后新增的日志内容；日志路径支持 `*.log` 和按日期轮转。
 - 🧹 **进程清理** — 结合进程路径、启动时间、父子关系与 Job Object 跟踪关联进程，清理后重试并验证；默认不按进程名称兜底结束同名程序。
 - 🕒 **定时执行** — 在计划时间前预留准备时间，解除遮罩并恢复亮度，到达计划时间后启动任务链。
@@ -40,9 +42,9 @@ GameDayWork 适合需要在无人值守时依次运行多个桌面工具的场�
 
 ## 快速开始
 
-1. 从 [Releases](https://github.com/L6H7Q7/GameDayWork/releases/latest) 下载 `GameDayWork-v0.4.9-win-x64-portable.zip`，解压到单独目录，运行 `GameDayWork.exe`。
+1. 从 [Releases](https://github.com/L6H7Q7/GameDayWork/releases/latest) 下载 `GameDayWork-v0.4.10-win-x64-portable.zip`，解压到单独目录，运行 `GameDayWork.exe`。
 2. 点击“添加”选择独立任务或任务组。点击左侧任务进入设置，选择任务类型并核对程序路径和参数。
-3. 在组设置中点击“添加任务”管理组内任务，并设置统一启动时间、任务持续时间和任务间隔，修改自动保存。独立任务完成后结束，任务组完成当前项后继续下一项。
+3. 在组设置中点击“添加任务”管理组内任务，并设置统一启动时间和任务间隔，修改自动保存；组内每项任务的最长运行时间在各自的任务设置中填写。独立任务完成后结束，任务组完成当前项后继续下一项。
 4. 需要假息屏、开机自启或企业微信通知时，在右上角“设置”中按需开启。
 
 关闭主窗口只会隐藏到托盘；需要结束程序时，请在托盘菜单选择“退出程序”。
@@ -66,7 +68,7 @@ GameDayWork 适合需要在无人值守时依次运行多个桌面工具的场�
 解压后的目录和首次运行生成的数据大致如下：
 
 ```text
-GameDayWork-v0.4.9-win-x64-portable\
+GameDayWork-v0.4.10-win-x64-portable\
 ├─ GameDayWork.exe
 ├─ GameDayWork.Service.exe
 ├─ 卸载系统服务.cmd
@@ -87,10 +89,10 @@ GameDayWork-v0.4.9-win-x64-portable\
 dotnet build .\GameDayWork.csproj
 dotnet build .\GameDayWork.Service\GameDayWork.Service.csproj
 dotnet run --project .\tests\GameOrchestrator.SmokeTests\GameOrchestrator.SmokeTests.csproj
-.\scripts\Publish-Portable.ps1 -Version 0.4.9
+.\scripts\Publish-Portable.ps1 -Version 0.4.10
 ```
 
-最后一条命令会生成 `artifacts/GameDayWork-v0.4.9-win-x64-portable.zip`。打包脚本会重建同名输出目录和 ZIP，请不要在该输出目录内保存个人配置或日志。发布包只包含便携程序和说明，不包含本机的 `data/`、`logs/`。
+最后一条命令会生成 `artifacts/GameDayWork-v0.4.10-win-x64-portable.zip`。打包脚本会重建同名输出目录和 ZIP，请不要在该输出目录内保存个人配置或日志。发布包只包含便携程序和说明，不包含本机的 `data/`、`logs/`。
 
 ## 项目结构
 

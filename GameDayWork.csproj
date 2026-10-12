@@ -8,7 +8,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <AssemblyName>GameDayWork</AssemblyName>
     <RootNamespace>GameOrchestrator</RootNamespace>
-    <Version>0.4.9</Version>
+    <Version>0.4.10</Version>
     <ApplicationIcon>Assets\GameDayWork.ico</ApplicationIcon>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
     <ApplicationManifest>app.manifest</ApplicationManifest>

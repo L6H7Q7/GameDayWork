@@ -344,7 +344,7 @@ public partial class MainWindow : Window
         var isChild = _viewModel.EditingTask?.IsGroupChild == true;
         TaskSettingsPanel.Visibility = isGroup ? Visibility.Collapsed : Visibility.Visible;
         GroupSettingsPanel.Visibility = isGroup ? Visibility.Visible : Visibility.Collapsed;
-        TaskScheduleFields.Visibility = TaskDurationFields.Visibility = isChild ? Visibility.Collapsed : Visibility.Visible;
+        TaskScheduleFields.Visibility = isChild ? Visibility.Collapsed : Visibility.Visible;
         GroupScheduleHint.Visibility = isChild ? Visibility.Visible : Visibility.Collapsed;
         UpdateExecutionButton();
         if (page == MainPage.Home) LogsChanged(null, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));

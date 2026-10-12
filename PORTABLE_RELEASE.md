@@ -7,13 +7,13 @@ GameDayWork 仅发布 Windows x64 便携版，不制作安装程序。默认不�
 需要 .NET 8 SDK。在仓库根目录执行：
 
 ```powershell
-.\scripts\Publish-Portable.ps1 -Version 0.4.9
+.\scripts\Publish-Portable.ps1 -Version 0.4.10
 ```
 
 产物为：
 
 ```text
-artifacts/GameDayWork-v0.4.9-win-x64-portable.zip
+artifacts/GameDayWork-v0.4.10-win-x64-portable.zip
 ```
 
 ## GitHub Releases
@@ -21,8 +21,8 @@ artifacts/GameDayWork-v0.4.9-win-x64-portable.zip
 推送符合 `vX.Y.Z` 格式的标签后，`.github/workflows/release.yml` 会构建同名便携包并创建 GitHub Release：
 
 ```powershell
-git tag v0.4.9
-git push origin v0.4.9
+git tag v0.4.10
+git push origin v0.4.10
 ```
 
 创建标签前，应先完成下方人工检查，且不要使用真实五项目做自动化试跑。

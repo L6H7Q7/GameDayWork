@@ -25,7 +25,6 @@ public sealed class AutomationTaskConfig : ObservableObject
     private TaskCompletionAction _completionAction = TaskCompletionAction.None;
     private string _toolType = "自定义任务";
     private bool _isExpanded;
-    private int _groupTaskDurationMinutes = 45;
     private int _groupTaskIntervalSeconds = 5;
     private TaskRunStatus _status = TaskRunStatus.Idle;
     private int _displayIndex;
@@ -33,11 +32,8 @@ public sealed class AutomationTaskConfig : ObservableObject
     public Guid Id { get; set; } = Guid.NewGuid();
     public bool IsGroup { get; set; }
     public ObservableCollection<AutomationTaskConfig> Children { get; set; } = [];
-    public int GroupTaskDurationMinutes { get => _groupTaskDurationMinutes; set => SetProperty(ref _groupTaskDurationMinutes, Math.Max(1, value)); }
     public int GroupTaskIntervalSeconds { get => _groupTaskIntervalSeconds; set => SetProperty(ref _groupTaskIntervalSeconds, Math.Max(0, value)); }
-    [JsonIgnore] public int? GroupRunMinutes { get; internal set; }
     [JsonIgnore] public int? IntervalAfterSeconds { get; internal set; }
-    [JsonIgnore] public int EffectiveMaxRunMinutes => GroupRunMinutes ?? MaxRunMinutes;
     public string ToolType { get => _toolType; set { if (SetProperty(ref _toolType, value)) { OnPropertyChanged(nameof(RepositoryUrl)); OnPropertyChanged(nameof(IconText)); } } }
     [JsonIgnore] public bool IsExpanded { get => _isExpanded; set { if (SetProperty(ref _isExpanded, value)) OnPropertyChanged(nameof(GroupIndicator)); } }
     [JsonIgnore] public string GroupIndicator => IsGroup ? (IsExpanded ? "▾" : "▸") : "";

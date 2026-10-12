@@ -56,7 +56,7 @@ public sealed class TaskRunnerService(ProcessMonitorService monitor, ProcessClea
             }
             task.Status = session.Status = TaskRunStatus.Running; events.Publish(new TaskStartedEvent(session)); SessionChanged?.Invoke(session);
             await log.WriteAsync(LogLevel.Info, $"{task.Name} 已启动，PID {root.Id}");
-            using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(task.EffectiveMaxRunMinutes));
+            using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(task.MaxRunMinutes));
             using var linked = CancellationTokenSource.CreateLinkedTokenSource(queueToken, timeout.Token);
             try { await WaitForCompletionAsync(root, task, session, linked.Token); }
             catch (OperationCanceledException) when (timeout.IsCancellationRequested && !queueToken.IsCancellationRequested) { timedOut = true; }

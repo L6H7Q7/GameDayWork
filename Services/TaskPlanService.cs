@@ -13,7 +13,7 @@ public static class TaskPlanService
             if (anchor.IsGroup) plan.AddRange(GroupPlan(anchor, anchor.Children));
             else
             {
-                anchor.GroupRunMinutes = null;
+                anchor.IsGroupChild = false;
                 anchor.IntervalAfterSeconds = 0;
                 plan.Add(anchor);
             }
@@ -26,7 +26,7 @@ public static class TaskPlanService
         var children = source.Where(item => item.Enabled && !item.IsGroup).ToList();
         for (var index = 0; index < children.Count; index++)
         {
-            children[index].GroupRunMinutes = group.GroupTaskDurationMinutes;
+            children[index].IsGroupChild = true;
             children[index].IntervalAfterSeconds = index < children.Count - 1 ? group.GroupTaskIntervalSeconds : 0;
         }
         return children;

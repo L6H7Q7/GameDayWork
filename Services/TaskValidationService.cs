@@ -31,8 +31,8 @@ public sealed class TaskValidationService
                 if (string.IsNullOrWhiteSpace(task.CompletionKeyword)) Add("日志关键字模式需要填写完成关键字");
             }
             if (task.CompletionMode == CompletionDetectionMode.Custom) Add("自定义完成检测尚未实现");
-            if (task.EffectiveMaxRunMinutes < 1) Add("最大运行时间必须大于 0 分钟");
-            if (task.GroupRunMinutes is null && !string.IsNullOrWhiteSpace(task.ScheduledStartTime)
+            if (task.MaxRunMinutes < 1) Add("最大运行时间必须大于 0 分钟");
+            if (!task.IsGroupChild && !string.IsNullOrWhiteSpace(task.ScheduledStartTime)
                 && !SchedulerService.TryParseTime(task.ScheduledStartTime, out _)) Add("定时启动时间格式应为 HH:mm，例如 08:00");
             if (task.CleanupWaitSeconds < 1) Add("清理等待时间必须大于 0 秒");
             if (task.CleanupRetries < 1) Add("清理重试次数必须大于 0");

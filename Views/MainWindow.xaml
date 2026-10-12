@@ -102,7 +102,7 @@
           </Grid.ColumnDefinitions>
           <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
             <TextBlock Text="GameDayWork" FontSize="21" FontWeight="Bold" Foreground="#071536"/>
-            <TextBlock Text="v0.4.9" Foreground="#6E7F9C" Margin="12,5,0,0"/>
+            <TextBlock Text="v0.4.10" Foreground="#6E7F9C" Margin="12,5,0,0"/>
           </StackPanel>
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <Button x:Name="HomeButton" Content="主页" Click="Home_Click" MinWidth="68" Margin="0,0,8,0"/>
@@ -301,12 +301,6 @@
                     </Grid>
                     <Grid Margin="0,0,0,12">
                       <Grid.ColumnDefinitions><ColumnDefinition Width="125"/><ColumnDefinition Width="110"/><ColumnDefinition/></Grid.ColumnDefinitions>
-                      <TextBlock Text="任务持续时间" Style="{StaticResource Label}"/>
-                      <TextBox x:Name="GroupDurationInput" Grid.Column="1" Text="{Binding EditingTask.GroupTaskDurationMinutes}"/>
-                      <TextBlock Grid.Column="2" Text="分钟，每项任务的上限" Foreground="#6E7F99" VerticalAlignment="Center" Margin="12,0"/>
-                    </Grid>
-                    <Grid Margin="0,0,0,12">
-                      <Grid.ColumnDefinitions><ColumnDefinition Width="125"/><ColumnDefinition Width="110"/><ColumnDefinition/></Grid.ColumnDefinitions>
                       <TextBlock Text="任务间隔" Style="{StaticResource Label}"/>
                       <TextBox x:Name="GroupIntervalInput" Grid.Column="1" Text="{Binding EditingTask.GroupTaskIntervalSeconds}"/>
                       <TextBlock Grid.Column="2" Text="秒，上一项清理后等待" Foreground="#6E7F99" VerticalAlignment="Center" Margin="12,0"/>
@@ -390,7 +384,7 @@
         </StackPanel>
       </Grid>
     </Grid>
-    <TextBlock x:Name="GroupScheduleHint" Text="启动时间、任务持续时间和任务间隔由所属任务组统一设置。" TextWrapping="Wrap" Foreground="#6E7F99" Visibility="Collapsed" Margin="0,0,0,12"/>
+    <TextBlock x:Name="GroupScheduleHint" Text="启动时间和任务间隔由所属任务组统一设置；最长运行时间按每项任务自身设置。" TextWrapping="Wrap" Foreground="#6E7F99" Visibility="Collapsed" Margin="0,0,0,12"/>
     <TextBlock Text="任务说明" Margin="0,0,0,6"/>
     <TextBox x:Name="TaskDescriptionInput" Text="{Binding EditingTask.Description,UpdateSourceTrigger=PropertyChanged}" Height="104" MinHeight="104" TextWrapping="Wrap" AcceptsReturn="True" VerticalContentAlignment="Top"/>
   </StackPanel>
